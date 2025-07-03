@@ -144,6 +144,9 @@ class ChatSnowflakeCortex(BaseChatModel):
     """Automatically inferred from env var `SNOWFLAKE_WAREHOUSE` if not provided."""
     snowflake_role: Optional[str] = Field(default=None, alias="role")
     """Automatically inferred from env var `SNOWFLAKE_ROLE` if not provided."""
+    snowflake_authenticator: Optional[str] = Field(default=None, alias="authenticator")
+    """Automatically inferred from env var `SNOWFLAKE_AUTHENTICATOR` if not provided.
+    Common values include 'snowflake', 'username_password_mfa', 'oauth', etc."""
 
     def bind_tools(
         self,
@@ -206,6 +209,9 @@ class ChatSnowflakeCortex(BaseChatModel):
         values["snowflake_role"] = get_from_dict_or_env(
             values, "snowflake_role", "SNOWFLAKE_ROLE"
         )
+        values["snowflake_authenticator"] = get_from_dict_or_env(
+            values, "snowflake_authenticator", "SNOWFLAKE_AUTHENTICATOR", default=None
+        )
 
         connection_params = {
             "account": values["snowflake_account"],
@@ -217,6 +223,10 @@ class ChatSnowflakeCortex(BaseChatModel):
             "role": values["snowflake_role"],
             "client_session_keep_alive": "True",
         }
+
+        # Add authenticator to connection params if provided
+        if values["snowflake_authenticator"]:
+            connection_params["authenticator"] = values["snowflake_authenticator"]
 
         try:
             values["session"] = Session.builder.configs(connection_params).create()
