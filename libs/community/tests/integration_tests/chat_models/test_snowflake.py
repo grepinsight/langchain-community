@@ -7,6 +7,7 @@ Note: This test must be run with the following environment variables set:
     SNOWFLAKE_SCHEMA="YOUR_SNOWFLAKE_SCHEMA",
     SNOWFLAKE_WAREHOUSE="YOUR_SNOWFLAKE_WAREHOUSE"
     SNOWFLAKE_ROLE="YOUR_SNOWFLAKE_ROLE",
+    SNOWFLAKE_AUTHENTICATOR="YOUR_SNOWFLAKE_AUTHENTICATOR" (optional)
 """
 
 import pytest
@@ -44,6 +45,41 @@ def test_chat_snowflake_cortex_model() -> None:
         model="foo",
     )
     assert chat.model == "foo"
+
+
+def test_chat_snowflake_cortex_authenticator() -> None:
+    """Test ChatSnowflakeCortex handles authenticator parameter."""
+    chat = ChatSnowflakeCortex(
+        authenticator="username_password_mfa",
+    )
+    assert chat.snowflake_authenticator == "username_password_mfa"
+
+
+def test_chat_snowflake_cortex_authenticator_alias() -> None:
+    """Test ChatSnowflakeCortex handles authenticator using alias."""
+    chat = ChatSnowflakeCortex(
+        authenticator="oauth",
+    )
+    assert chat.snowflake_authenticator == "oauth"
+
+
+def test_chat_snowflake_cortex_authenticator_with_mfa() -> None:
+    """Test ChatSnowflakeCortex works with MFA authenticator for token caching."""
+    # This test verifies that the authenticator parameter is properly set
+    # for MFA scenarios where token caching is beneficial
+    chat = ChatSnowflakeCortex(
+        authenticator="username_password_mfa",
+    )
+
+    # Verify the authenticator is set correctly
+    assert chat.snowflake_authenticator == "username_password_mfa"
+
+    # Test basic functionality - if authenticator setup is working,
+    # the session should be created without errors
+    message = HumanMessage(content="Hello")
+    response = chat([message])
+    assert isinstance(response, BaseMessage)
+    assert isinstance(response.content, str)
 
 
 def test_chat_snowflake_cortex_generate(chat: ChatSnowflakeCortex) -> None:
